@@ -20,7 +20,7 @@ type Karn struct {
 	db *bbolt.DB
 }
 
-func New(options ...OptFunc) (*Hopper, error) {
+func New(options ...OptFunc) (*Karn, error) {
 	opts := &Options{
 		Encoder: JSONEncoder{},
 		Decoder: JSONDecoder{},
@@ -34,7 +34,7 @@ func New(options ...OptFunc) (*Hopper, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Hopper{
+	return &Karn{
 		currentDatabase: dbname,
 		db:              db,
 		Options:         opts,
