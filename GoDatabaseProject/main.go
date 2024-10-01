@@ -55,10 +55,9 @@ func New(dir string, options *Options) (*Driver, error) {
 
 	//if directory already exists it will return nil
 	//os.MkdirAll(dir, 0755) calls for persmission Owner: read, write, execute, Group: read, execute Others: read, execute
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		if !os.IsExist(err) {
-			return nil, err
-		}
+	if _, err := os.Stat(dir); err == nil {
+		opts.Logger.Debug("Using '%s' (database already exists)\n", dir)
+		return &driver, nil
 	}
 
 	opts.Logger.Debug("Creating the database at '%s'...\n", dir)
@@ -71,7 +70,7 @@ func (d *Driver) Write(collection, resource string, v interface{}) error {
 	}
 
 	if resource == "" {
-		return fmt.Errorf("Missing resource - unable to save record!")
+		return fmt.Errorf("Missing resource - unable to save record(no name)!")
 	}
 
 	mutex := d.getOrCreateMutex(collection)
@@ -100,6 +99,60 @@ func (d *Driver) Write(collection, resource string, v interface{}) error {
 	}
 
 	return os.Rename(tmpPath, fnlPath)
+}
+
+func (d *Driver) Read(collection, resource string, v interface{}) error {
+	if collection == "" {
+		return fmt.Errorf("Missing collection - unable to read record!")
+	}
+
+	if resource == "" {
+		return fmt.Errorf("Missing resource - unable to read record (no name)!")
+	}
+
+	record := filepath.Join(d.dir, collection, resource+".json")
+
+	if _, err := os.Stat(record); err != nil {
+		return err
+	}
+
+	b, err := os.ReadFile(record)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(b, v)
+
+}
+
+func (d *Driver) Readall(collection, resource string, v interface{}) error {
+	if collection == "" {
+		return fmt.Errorf("Missing collection - unable to read !")
+	}
+
+	dir := filepath.Join(d.dir, collection)
+
+	if _, err := stat(dir); err != nil {
+		return nil, err
+	}
+
+	files, _ := os.ReadDir(dir)
+
+	var records []string
+
+	for _, file := range files {
+		b, err := os.ReadFile(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return nil, err
+		}
+
+		records = append(records, string(b))
+	}
+	return records, nil
+}
+
+func stat(dir string) {
+	panic("unimplemented")
 }
 
 func (d *Driver) getOrCreateMutex(collection string) *sync.Mutex {
