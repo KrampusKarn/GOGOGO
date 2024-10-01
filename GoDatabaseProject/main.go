@@ -55,7 +55,7 @@ func New(dir string, options *Options) (*Driver, error) {
 
 	//if directory already exists it will return nil
 	//os.MkdirAll(dir, 0755) calls for persmission Owner: read, write, execute, Group: read, execute Others: read, execute
-	if _, err := os.Stat(dir); err == nil {
+	if _, err := os.stat(dir); err == nil {
 		opts.Logger.Debug("Using '%s' (database already exists)\n", dir)
 		return &driver, nil
 	}
@@ -112,9 +112,9 @@ func (d *Driver) Read(collection, resource string, v interface{}) error {
 
 	record := filepath.Join(d.dir, collection, resource+".json")
 
-	if _, err := os.Stat(record); err != nil {
+	if _, err := stat(record); err != nil {
 		return err
-	}
+	}}
 
 	b, err := os.ReadFile(record)
 	if err != nil {
